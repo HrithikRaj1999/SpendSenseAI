@@ -1,0 +1,12 @@
+# Production
+dist
+build
+
+# Misc
+.env
+.env.local
+.DS_Store
+
+# Vite
+dist-ssr
+*.local
