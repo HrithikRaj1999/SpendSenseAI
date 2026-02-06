@@ -1,6 +1,6 @@
 # Root Structure
 
-expense-calculator/
+SpendSenseAI/
 ├── apps/
 │ ├── web/ # React 19 + Vite + TS frontend
 │ └── api/ # FastAPI API + Worker (same codebase, 2 entrypoints)

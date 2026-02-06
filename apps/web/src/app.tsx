@@ -1,5 +1,12 @@
+import { AuthProvider } from "./app/providers/AuthProvider";
+import { AppRouter } from "./app/router/router";
+
 const App = () => {
-  return <div>app</div>;
+  return (
+    <AuthProvider>
+      <AppRouter />
+    </AuthProvider>
+  );
 };
 
 export default App;
