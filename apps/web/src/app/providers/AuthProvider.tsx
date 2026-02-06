@@ -1,3 +1,4 @@
+// src/app/providers/AuthProvider.tsx
 import React, {
   createContext,
   useContext,
@@ -11,6 +12,12 @@ import {
   beginLogout,
   exchangeCodeForTokens,
 } from "@/features/auth/api/oauth";
+import {
+  setRememberMe,
+  saveAuth,
+  getAuth,
+  clearAuth,
+} from "@/features/auth/utils/authStore";
 
 type AuthUser = {
   email?: string;
@@ -21,7 +28,7 @@ type AuthSession = {
   accessToken: string;
   idToken: string;
   refreshToken?: string;
-  expiresAt: number; // epoch seconds
+  expiresAt: number; // epoch ms
   user: AuthUser;
 };
 
@@ -29,20 +36,21 @@ type AuthState = {
   session: AuthSession | null;
   loading: boolean;
   error: string | null;
+  booting: boolean;
 };
 
 type AuthAction =
   | { type: "auth/start" }
   | { type: "auth/success"; payload: AuthSession }
   | { type: "auth/failure"; payload: string }
-  | { type: "auth/signout" };
-
-const STORAGE_KEY = "spendsense.auth.session.v1";
+  | { type: "auth/signout" }
+  | { type: "auth/booted" };
 
 const initialState: AuthState = {
   session: null,
   loading: false,
   error: null,
+  booting: true,
 };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
@@ -50,11 +58,18 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "auth/start":
       return { ...state, loading: true, error: null };
     case "auth/success":
-      return { session: action.payload, loading: false, error: null };
+      return {
+        session: action.payload,
+        loading: false,
+        error: null,
+        booting: false,
+      };
     case "auth/failure":
       return { ...state, loading: false, error: action.payload };
     case "auth/signout":
-      return { session: null, loading: false, error: null };
+      return { session: null, loading: false, error: null, booting: false };
+    case "auth/booted":
+      return { ...state, booting: false };
     default:
       return state;
   }
@@ -65,9 +80,15 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
     const payloadSegment = token.split(".")[1];
     if (!payloadSegment) return null;
 
+    // base64url -> base64
     const normalized = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+
     const json = decodeURIComponent(
-      atob(normalized)
+      atob(padded)
         .split("")
         .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
         .join(""),
@@ -79,23 +100,19 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-function buildSession(tokens: {
+function toSessionFromStored(stored: {
   accessToken: string;
   idToken: string;
   refreshToken?: string;
-  expiresIn?: number;
+  expiresAt: number;
 }): AuthSession {
-  const now = Math.floor(Date.now() / 1000);
-  const expiresIn =
-    typeof tokens.expiresIn === "number" ? tokens.expiresIn : 3600;
-  const expiresAt = now + expiresIn;
+  const idPayload = decodeJwtPayload(stored.idToken);
 
-  const idPayload = decodeJwtPayload(tokens.idToken);
   return {
-    accessToken: tokens.accessToken,
-    idToken: tokens.idToken,
-    refreshToken: tokens.refreshToken,
-    expiresAt,
+    accessToken: stored.accessToken,
+    idToken: stored.idToken,
+    refreshToken: stored.refreshToken,
+    expiresAt: stored.expiresAt,
     user: {
       email:
         typeof idPayload?.email === "string"
@@ -108,37 +125,22 @@ function buildSession(tokens: {
     },
   };
 }
-
-function saveSession(session: AuthSession) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+function normalizeExpiresAt(expiresAt: number): number {
+  // If it looks like seconds (10 digits), convert to ms
+  return expiresAt < 1e12 ? expiresAt * 1000 : expiresAt;
 }
 
-function readSession(): AuthSession | null {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as AuthSession;
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
-
-function clearSession() {
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-function isExpired(session: AuthSession): boolean {
-  // small skew buffer
-  const now = Math.floor(Date.now() / 1000);
-  return session.expiresAt <= now + 30;
+function isExpired(expiresAt: number): boolean {
+  const ms = normalizeExpiresAt(expiresAt);
+  return ms <= Date.now() + 30_000;
 }
 
 type AuthContextValue = {
   session: AuthSession | null;
   loading: boolean;
   error: string | null;
-  signIn: () => Promise<void>;
+  booting: boolean;
+  signIn: (rememberMe: boolean) => Promise<void>;
   handleOAuthCallback: (code: string, state: string | null) => Promise<void>;
   signOut: () => void;
   clearError: () => void;
@@ -149,14 +151,22 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Restore session on boot
+  // ✅ Restore session on boot (from localStorage OR sessionStorage based on spendsense.auth.mode)
   useEffect(() => {
-    const session = readSession();
-    if (session && !isExpired(session)) {
-      dispatch({ type: "auth/success", payload: session });
-    } else if (session && isExpired(session)) {
-      clearSession();
+    const stored = getAuth();
+
+    if (!stored) {
+      dispatch({ type: "auth/booted" });
+      return;
     }
+
+    if (isExpired(stored.expiresAt)) {
+      clearAuth();
+      dispatch({ type: "auth/booted" });
+      return;
+    }
+
+    dispatch({ type: "auth/success", payload: toSessionFromStored(stored) });
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -164,11 +174,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session: state.session,
       loading: state.loading,
       error: state.error,
+      booting: state.booting,
 
-      // Redirect to Cognito Hosted UI using PKCE
-      signIn: async () => {
+      // ✅ Redirect to Cognito Hosted UI using PKCE
+      signIn: async (rememberMe: boolean) => {
         dispatch({ type: "auth/start" });
         try {
+          // This decides localStorage vs sessionStorage for the coming login
+          setRememberMe(rememberMe);
+
           await beginPkceSignIn();
           // navigation happens inside beginPkceSignIn()
         } catch (e) {
@@ -180,14 +194,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       },
 
-      // Called by /oauth/callback page after Cognito redirects back
+      // ✅ Called by /oauth/callback page after Cognito redirects back
       handleOAuthCallback: async (code: string, stateValue: string | null) => {
         dispatch({ type: "auth/start" });
         try {
           const tokens = await exchangeCodeForTokens(code, stateValue);
-          const session = buildSession(tokens);
-          saveSession(session);
-          dispatch({ type: "auth/success", payload: session });
+
+          // ✅ Persist to chosen storage key: "spendsense.auth"
+          saveAuth(tokens);
+
+          // ✅ Build in-memory session for UI
+          const stored = getAuth();
+          if (!stored) throw new Error("Failed to persist auth session.");
+
+          dispatch({
+            type: "auth/success",
+            payload: toSessionFromStored(stored),
+          });
         } catch (e) {
           dispatch({
             type: "auth/failure",
@@ -198,14 +221,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
 
       signOut: () => {
-        clearSession();
+        clearAuth();
         dispatch({ type: "auth/signout" });
 
-        // Hosted UI logout (ends Cognito session too)
         try {
           beginLogout();
         } catch {
-          // if env missing, just stay signed out locally
           window.location.assign("/login");
         }
       },
@@ -214,10 +235,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (state.error) dispatch({ type: "auth/failure", payload: "" });
       },
     }),
-    [state.error, state.loading, state.session],
+    [state.booting, state.error, state.loading, state.session],
   );
 
-  // quick guard: if env is missing, fail loud in dev
+  // dev sanity checks
   useEffect(() => {
     if (import.meta.env.DEV) {
       if (

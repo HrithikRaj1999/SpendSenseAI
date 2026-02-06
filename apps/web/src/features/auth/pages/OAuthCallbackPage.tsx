@@ -1,8 +1,12 @@
+// src/features/auth/pages/OAuthCallbackPage.tsx
 import { useEffect, useRef } from "react";
-
-import { exchangeCodeForTokens } from "../api/oauth";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/app/providers/AuthProvider";
+import { ROUTES } from "@/app/router/routes";
 
 export default function OAuthCallbackPage() {
+  const { handleOAuthCallback } = useAuth();
+  const navigate = useNavigate();
   const ran = useRef(false);
 
   useEffect(() => {
@@ -13,18 +17,22 @@ export default function OAuthCallbackPage() {
     const code = params.get("code");
     const state = params.get("state");
 
-    if (!code) return;
+    if (!code) {
+      navigate(ROUTES.SIGN_IN, { replace: true });
+      return;
+    }
 
     (async () => {
-      const tokens = await exchangeCodeForTokens(code, state);
-      window.history.replaceState({}, document.title, "/");
+      await handleOAuthCallback(code, state);
 
-      // TODO: sav to storage/state
-      console.log(tokens);
-    })().catch((e) => {
-      console.error(e);
+      // remove code/state so refresh doesn't reuse it
+      window.history.replaceState({}, document.title, ROUTES.APP);
+
+      navigate(ROUTES.APP, { replace: true });
+    })().catch(() => {
+      navigate(ROUTES.SIGN_IN, { replace: true });
     });
-  }, []);
+  }, [handleOAuthCallback, navigate]);
 
-  return null;
+  return <div className="p-6">Signing you in...</div>;
 }

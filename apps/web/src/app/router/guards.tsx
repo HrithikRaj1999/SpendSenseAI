@@ -1,18 +1,22 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@/app/providers/AuthProvider";
 import { ROUTES } from "@/app/router/routes";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthed, loading } = useAuth();
-  if (loading) return null;
-  if (!isAuthed) return <Navigate to={ROUTES.SIGN_IN} replace />;
+  const { session, booting } = useAuth();
+
+  if (booting) return null; // or loader
+  if (!session?.accessToken) return <Navigate to={ROUTES.SIGN_IN} replace />;
+
   return <>{children}</>;
 }
 
 export function PublicOnly({ children }: { children: React.ReactNode }) {
-  const { isAuthed, loading } = useAuth();
-  if (loading) return null;
-  if (isAuthed) return <Navigate to={ROUTES.APP} replace />;
+  const { session, booting } = useAuth();
+
+  if (booting) return null;
+  if (session?.accessToken) return <Navigate to={ROUTES.APP} replace />;
+
   return <>{children}</>;
 }
