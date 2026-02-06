@@ -1,4 +1,3 @@
-// src/features/auth/utils/authStore.ts
 type StorageMode = "session" | "local";
 
 const KEY = "spendsense.auth";

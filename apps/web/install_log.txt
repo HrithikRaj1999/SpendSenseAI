@@ -1,0 +1,112 @@
+﻿node.exe : npm error 
+code ERESOLVE
+At C:\nvm4w\nodejs\npm
+.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (npm error    
+ code ERESOLVE:Str    
+ing) [], RemoteEx    
+ception
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+npm error ERESOLVE 
+could not resolve
+npm error
+npm error While 
+resolving: 
+lucide-react@0.394.0
+npm error Found: 
+react@19.2.4
+npm error 
+node_modules/react
+npm error   
+react@"^19.0.0" from 
+the root project
+npm error   
+peerOptional 
+react@"^16.9.0 || 
+^17.0.0 || ^18 || 
+^19" from @reduxjs/too
+lkit@2.11.2
+npm error   node_modul
+es/@reduxjs/toolkit
+npm error     @reduxjs
+/toolkit@"^2.11.2" 
+from the root project
+npm error     @reduxjs
+/toolkit@"1.x.x || 
+2.x.x" from 
+recharts@3.7.0
+npm error     
+node_modules/recharts
+npm error       
+recharts@"^3.7.0" 
+from the root project
+npm error   7 more 
+(react-dom, 
+react-hook-form, 
+react-redux, 
+react-router, ...)
+npm error
+npm error Could not 
+resolve dependency:
+npm error peer 
+react@"^16.5.1 || 
+^17.0.0 || ^18.0.0" 
+from 
+lucide-react@0.394.0
+npm error node_modules
+/lucide-react
+npm error   lucide-rea
+ct@"^0.394.0" from 
+the root project
+npm error
+npm error Conflicting 
+peer dependency: 
+react@18.3.1
+npm error 
+node_modules/react
+npm error   peer 
+react@"^16.5.1 || 
+^17.0.0 || ^18.0.0" 
+from 
+lucide-react@0.394.0
+npm error   node_modul
+es/lucide-react
+npm error     lucide-r
+eact@"^0.394.0" from 
+the root project
+npm error
+npm error Fix the 
+upstream dependency 
+conflict, or retry
+npm error this 
+command with --force 
+or --legacy-peer-deps
+npm error to accept 
+an incorrect (and 
+potentially broken) 
+dependency resolution.
+npm error
+npm error
+npm error For a full 
+report see:
+npm error C:\Users\HRI
+THIK\AppData\Local\npm
+-cache\_logs\2026-02-0
+6T18_47_59_200Z-eresol
+ve-report.txt
+npm error A complete 
+log of this run can 
+be found in: C:\Users\
+HRITHIK\AppData\Local\
+npm-cache\_logs\2026-0
+2-06T18_47_59_200Z-deb
+ug-0.log
