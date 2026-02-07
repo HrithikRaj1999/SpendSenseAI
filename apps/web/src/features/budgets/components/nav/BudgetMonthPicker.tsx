@@ -1,30 +1,62 @@
 import * as React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSearchParams } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-function monthOptions(count = 12) {
-  const out: string[] = [];
-  const now = new Date();
-  for (let i = 0; i < count; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    out.push(`${d.getFullYear()}-${m}`);
-  }
-  return out;
-}
+type Props = {
+  value: string;
+  onChange: (month: string) => void;
+  options: string[]; // ✅ dynamic months from DB
+  disabled?: boolean;
+};
 
-export function BudgetMonthPicker() {
+export function BudgetMonthPicker({
+  value,
+  onChange,
+  options,
+  disabled,
+}: Props) {
   const [params, setParams] = useSearchParams();
-  const value = params.get("month") ?? monthOptions(1)[0];
-  const opts = React.useMemo(() => monthOptions(12), []);
+
+  // Ensure selected month is always visible in dropdown
+  const opts = React.useMemo(() => {
+    const set = new Set(options);
+    set.add(value);
+    return Array.from(set).sort();
+  }, [options, value]);
+
+  // URL → state on mount
+  React.useEffect(() => {
+    const urlMonth = params.get("month");
+    if (urlMonth && urlMonth !== value) onChange(urlMonth);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // state → URL
+  React.useEffect(() => {
+    const urlMonth = params.get("month");
+    if (value && urlMonth !== value) {
+      const next = new URLSearchParams(params);
+      next.set("month", value);
+      setParams(next, { replace: true });
+    }
+  }, [value, params, setParams]);
 
   return (
     <Select
       value={value}
       onValueChange={(v) => {
-        params.set("month", v);
-        setParams(params, { replace: true });
+        onChange(v);
+        const next = new URLSearchParams(params);
+        next.set("month", v);
+        setParams(next, { replace: true });
       }}
+      disabled={disabled}
     >
       <SelectTrigger className="w-[140px] rounded-2xl">
         <SelectValue placeholder="Month" />

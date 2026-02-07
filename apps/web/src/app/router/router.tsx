@@ -232,7 +232,7 @@ const router = createBrowserRouter([
 export function AppRouter() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <RouterProvider router={router} fallbackElement={<PageFallback />} />
+      <RouterProvider router={router} />
     </ThemeProvider>
   );
 }

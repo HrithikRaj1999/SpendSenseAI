@@ -565,6 +565,12 @@ export async function mockCreateGoal(body: Partial<Goal>): Promise<Goal> {
   return goal;
 }
 
+export async function mockListBudgetMonths() {
+  await sleep(120);
+  const months = Object.keys(MockBudgetsDB.months).sort();
+  return { months };
+}
+
 export async function mockSimulateWhatIf(input: {
   month: BudgetMonth;
   scenario: WhatIfScenario;
@@ -620,4 +626,50 @@ export async function mockSimulateWhatIf(input: {
   );
 
   return copy;
+}
+
+export async function mockCreateMonthBudget(input: {
+  month: BudgetMonth;
+  totalLimit: number;
+  mode?: BudgetMode;
+  rolloverUnused?: boolean;
+}) {
+  await sleep(200);
+
+  const store =
+    MockBudgetsDB.months[input.month] ?? createMonthIfMissing(input.month);
+
+  store.budget = {
+    ...store.budget,
+    month: input.month,
+    totalLimit: Math.max(0, Math.round(input.totalLimit)),
+    mode: input.mode ?? store.budget.mode,
+    rolloverUnused: input.rolloverUnused ?? store.budget.rolloverUnused,
+    updatedAt: nowIso(),
+  };
+
+  MockBudgetsDB.activeMonth = input.month;
+  return buildDTO(input.month);
+}
+
+export async function mockUpdateBudget(input: {
+  month: BudgetMonth;
+  patch: Partial<Pick<Budget, "totalLimit" | "mode" | "rolloverUnused">>;
+}) {
+  await sleep(200);
+
+  const store =
+    MockBudgetsDB.months[input.month] ?? createMonthIfMissing(input.month);
+
+  store.budget = {
+    ...store.budget,
+    ...input.patch,
+    totalLimit:
+      input.patch.totalLimit !== undefined
+        ? Math.max(0, Math.round(input.patch.totalLimit))
+        : store.budget.totalLimit,
+    updatedAt: nowIso(),
+  };
+
+  return buildDTO(input.month);
 }
