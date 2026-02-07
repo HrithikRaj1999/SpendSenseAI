@@ -44,6 +44,8 @@ export function getAuth(): StoredAuth | null {
   }
 }
 
+export const authGetAccessToken = async () => getAuth()?.accessToken;
+
 export function clearAuth() {
   localStorage.removeItem(KEY);
   sessionStorage.removeItem(KEY);

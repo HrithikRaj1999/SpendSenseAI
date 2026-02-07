@@ -1,5 +1,5 @@
 import { fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { authGetAccessToken } from "@/features/auth/utils/auth";
+import { authGetAccessToken } from "@/features/auth/utils/authStore";
 
 export const baseQuery = fetchBaseQuery({
   baseUrl: import.meta.env.VITE_API_BASE_URL,

@@ -6,7 +6,7 @@ import { AppShell } from "@/layouts/AppShell";
 
 import SignInPage from "@/features/auth/pages/SignInPage";
 import OAuthCallbackPage from "@/features/auth/pages/OAuthCallbackPage";
-
+import TransactionsPage from "@/features/expenses/pages/TransactionsPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import ExpensesPage from "@/features/expenses/pages/ExpensesPage";
 import BudgetsPage from "@/features/budgets/pages/BudgetsPage";
@@ -52,7 +52,7 @@ export function AppRouter() {
           }
         >
           <Route index element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-
+          <Route path={ROUTES.TRANSACTIONS} element={<TransactionsPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="budgets" element={<BudgetsPage />} />

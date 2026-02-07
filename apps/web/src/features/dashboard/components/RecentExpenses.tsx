@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatINR } from "@/lib/utils";
-import { RecentExpense } from "../utils/types";
+import { RecentExpense } from "../../dashboard/utils/types";
 import {
   ShoppingBag,
   Coffee,
@@ -13,6 +13,8 @@ import {
   Receipt,
   ArrowUpRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/app/router/routes";
 
 const getCategoryIcon = (cat: string) => {
   const c = cat.toLowerCase();
@@ -29,6 +31,7 @@ type Props = { data: RecentExpense[] };
 export const RecentExpenses = React.memo(function RecentExpenses({
   data,
 }: Props) {
+  const nav = useNavigate();
   return (
     <Card className="rounded-3xl border-0 shadow-lg ring-1 ring-black/5">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -41,7 +44,10 @@ export const RecentExpenses = React.memo(function RecentExpenses({
           </CardTitle>
         </div>
 
-        <button className="hidden sm:flex items-center text-xs font-medium text-primary hover:underline">
+        <button
+          onClick={() => nav(ROUTES.TRANSACTIONS)}
+          className="hidden sm:flex items-center text-xs font-medium text-primary hover:underline"
+        >
           View All <ArrowUpRight className="ml-1 h-3 w-3" />
         </button>
       </CardHeader>
