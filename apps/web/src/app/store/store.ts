@@ -5,6 +5,7 @@ import { insightsApi } from "@/features/expenses/api/insightsApi";
 import { recurringApi } from "@/features/expenses/api/recurringApi";
 import { cleanupApi } from "@/features/expenses/api/cleanupApi";
 import { askAiApi } from "@/features/expenses/api/askAiApi";
+import { budgetsApi } from "@/features/budgets/api/budgetsApi"; // ✅ add
 
 export const apis = [
   dashboardApi,
@@ -13,6 +14,7 @@ export const apis = [
   recurringApi,
   cleanupApi,
   askAiApi,
+  budgetsApi,
 ] as const;
 
 export const store = configureStore({
@@ -23,6 +25,7 @@ export const store = configureStore({
     [recurringApi.reducerPath]: recurringApi.reducer,
     [cleanupApi.reducerPath]: cleanupApi.reducer,
     [askAiApi.reducerPath]: askAiApi.reducer,
+    [budgetsApi.reducerPath]: budgetsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -32,6 +35,7 @@ export const store = configureStore({
       recurringApi.middleware,
       cleanupApi.middleware,
       askAiApi.middleware,
+      budgetsApi.middleware,
     ),
 });
 

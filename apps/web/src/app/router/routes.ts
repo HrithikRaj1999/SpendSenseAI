@@ -16,6 +16,14 @@ export const ROUTES = {
   EXPENSES_TRASH: "/app/expenses/trash",
 
   BUDGETS: "/app/budgets",
+  BUDGETS_CATEGORIES: "/app/budgets/categories",
+  BUDGETS_ALERTS: "/app/budgets/alerts",
+  BUDGETS_GUARDRAILS: "/app/budgets/guardrails",
+  BUDGETS_GOALS: "/app/budgets/goals",
+  BUDGETS_INSIGHTS: "/app/budgets/insights",
+  BUDGETS_WHAT_IF: "/app/budgets/what-if",
+  BUDGETS_HISTORY: "/app/budgets/history",
+  BUDGETS_SETTINGS: "/app/budgets/settings",
 
   AI: "/app/ai",
   AI_INSIGHTS: "/app/ai/insights",

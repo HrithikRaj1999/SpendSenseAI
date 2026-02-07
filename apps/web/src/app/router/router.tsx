@@ -1,11 +1,17 @@
 import * as React from "react";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import {
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+} from "react-router-dom";
+
 import { ROUTES } from "@/app/router/routes";
 import { RequireAuth, PublicOnly } from "@/app/router/guards";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { AppShell } from "@/layouts/AppShell";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 
+// -------------------- lazy pages --------------------
 const SignInPage = React.lazy(() => import("@/features/auth/pages/SignInPage"));
 const OAuthCallbackPage = React.lazy(
   () => import("@/features/auth/pages/OAuthCallbackPage"),
@@ -43,10 +49,59 @@ const TrashPage = React.lazy(
   () => import("@/features/expenses/pages/TrashPage"),
 );
 
-const BudgetsPage = React.lazy(
-  () => import("@/features/budgets/pages/BudgetsPage"),
+// Budgets (named exports wrapped as default for React.lazy)
+const BudgetsLayout = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsLayout").then((m) => ({
+    default: m.BudgetsLayout,
+  })),
+);
+const BudgetsOverviewPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsOverviewPage").then((m) => ({
+    default: m.BudgetsOverviewPage,
+  })),
+);
+const BudgetsCategoriesPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsCategoriesPage").then((m) => ({
+    default: m.BudgetsCategoriesPage,
+  })),
+);
+const BudgetsAlertsPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsAlertsPage").then((m) => ({
+    default: m.BudgetsAlertsPage,
+  })),
+);
+const BudgetsGuardrailsPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsGuardrailsPage").then((m) => ({
+    default: m.BudgetsGuardrailsPage,
+  })),
+);
+const BudgetsGoalsPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsGoalsPage").then((m) => ({
+    default: m.BudgetsGoalsPage,
+  })),
+);
+const BudgetsInsightsPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsInsightsPage").then((m) => ({
+    default: m.BudgetsInsightsPage,
+  })),
+);
+const BudgetsWhatIfPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsWhatIfPage").then((m) => ({
+    default: m.BudgetsWhatIfPage,
+  })),
+);
+const BudgetsHistoryPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsHistoryPage").then((m) => ({
+    default: m.BudgetsHistoryPage,
+  })),
+);
+const BudgetsSettingsPage = React.lazy(() =>
+  import("@/features/budgets/routes/BudgetsSettingsPage").then((m) => ({
+    default: m.BudgetsSettingsPage,
+  })),
 );
 
+// AI
 const AiHubPage = React.lazy(() => import("@/features/Ai/pages/AiHubPage"));
 const AiInsightsPage = React.lazy(
   () => import("@/features/Ai/pages/AiInsightPage"),
@@ -62,85 +117,122 @@ const SettingsPage = React.lazy(
   () => import("@/features/settings/pages/SettingsPage"),
 );
 
+// -------------------- fallback --------------------
+import { MoneyLoader } from "@/components/ui/MoneyLoader";
+
 function PageFallback() {
-  return <div className="p-6 text-sm text-muted-foreground">Loading...</div>;
+  return <MoneyLoader />;
 }
 
+// Wrap route element with Suspense fallback (clean + reusable)
+function withSuspense(node: React.ReactNode) {
+  return <React.Suspense fallback={<PageFallback />}>{node}</React.Suspense>;
+}
+
+// -------------------- router (latest) --------------------
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Navigate to={ROUTES.SIGN_IN} replace />,
+  },
+
+  {
+    path: ROUTES.SIGN_IN,
+    element: withSuspense(
+      <PublicOnly>
+        <AuthLayout>
+          <SignInPage />
+        </AuthLayout>
+      </PublicOnly>,
+    ),
+  },
+
+  {
+    path: ROUTES.CALLBACK,
+    element: withSuspense(
+      <AuthLayout>
+        <OAuthCallbackPage />
+      </AuthLayout>,
+    ),
+  },
+
+  {
+    path: ROUTES.APP, // "/app"
+    element: withSuspense(
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>,
+    ),
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+
+      { path: "dashboard", element: withSuspense(<DashboardPage />) },
+
+      // EXPENSES
+      {
+        path: "expenses",
+        element: withSuspense(<ExpensesLayoutPage />),
+        children: [
+          { index: true, element: withSuspense(<AllExpensePage />) },
+          { path: "add", element: withSuspense(<AddExpensePage />) },
+          { path: "bulk", element: withSuspense(<BulkActionsPage />) },
+          { path: "cleanup", element: withSuspense(<CleanupPage />) },
+          { path: "recurring", element: withSuspense(<RecurringPage />) },
+          { path: "insights", element: withSuspense(<ExpenseInsightsPage />) },
+          { path: "ask-ai", element: withSuspense(<AskAiPage />) },
+          { path: "trash", element: withSuspense(<TrashPage />) },
+        ],
+      },
+
+      {
+        path: "budgets",
+        element: withSuspense(<BudgetsLayout />),
+        children: [
+          { index: true, element: withSuspense(<BudgetsOverviewPage />) },
+          {
+            path: "categories",
+            element: withSuspense(<BudgetsCategoriesPage />),
+          },
+          { path: "alerts", element: withSuspense(<BudgetsAlertsPage />) },
+          {
+            path: "guardrails",
+            element: withSuspense(<BudgetsGuardrailsPage />),
+          },
+          { path: "goals", element: withSuspense(<BudgetsGoalsPage />) },
+          { path: "insights", element: withSuspense(<BudgetsInsightsPage />) },
+          { path: "what-if", element: withSuspense(<BudgetsWhatIfPage />) },
+          { path: "history", element: withSuspense(<BudgetsHistoryPage />) },
+          { path: "settings", element: withSuspense(<BudgetsSettingsPage />) },
+        ],
+      },
+
+      // AI
+      {
+        path: "ai",
+        element: withSuspense(<AiHubPage />),
+        children: [
+          { index: true, element: <Navigate to="insights" replace /> },
+          { path: "insights", element: withSuspense(<AiInsightsPage />) },
+          { path: "alerts", element: withSuspense(<AiAlertsPage />) },
+          { path: "analytics", element: withSuspense(<AiAnalyticsPage />) },
+        ],
+      },
+
+      { path: "settings", element: withSuspense(<SettingsPage />) },
+    ],
+  },
+
+  {
+    path: "*",
+    element: <Navigate to={ROUTES.SIGN_IN} replace />,
+  },
+]);
+
+// -------------------- exported component --------------------
 export function AppRouter() {
   return (
-    <BrowserRouter>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <React.Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route
-              path="/"
-              element={<Navigate to={ROUTES.SIGN_IN} replace />}
-            />
-
-            <Route
-              path={ROUTES.SIGN_IN}
-              element={
-                <PublicOnly>
-                  <AuthLayout>
-                    <SignInPage />
-                  </AuthLayout>
-                </PublicOnly>
-              }
-            />
-
-            <Route
-              path={ROUTES.CALLBACK}
-              element={
-                <AuthLayout>
-                  <OAuthCallbackPage />
-                </AuthLayout>
-              }
-            />
-
-            <Route
-              path={ROUTES.APP}
-              element={
-                <RequireAuth>
-                  <AppShell />
-                </RequireAuth>
-              }
-            >
-              <Route index element={<Navigate to="dashboard" replace />} />
-
-              <Route path="dashboard" element={<DashboardPage />} />
-
-              {/* ✅ EXPENSES HUB */}
-              <Route path="expenses" element={<ExpensesLayoutPage />}>
-                <Route index element={<AllExpensePage />} />
-                <Route path="add" element={<AddExpensePage />} />
-                <Route path="bulk" element={<BulkActionsPage />} />
-                <Route path="cleanup" element={<CleanupPage />} />
-                <Route path="recurring" element={<RecurringPage />} />
-                <Route path="insights" element={<ExpenseInsightsPage />} />
-                <Route path="ask-ai" element={<AskAiPage />} />
-                <Route path="trash" element={<TrashPage />} />
-              </Route>
-
-              <Route path="budgets" element={<BudgetsPage />} />
-
-              {/* AI */}
-              <Route path="ai" element={<AiHubPage />}>
-                <Route index element={<Navigate to="insights" replace />} />
-                <Route path="insights" element={<AiInsightsPage />} />
-                <Route path="alerts" element={<AiAlertsPage />} />
-                <Route path="analytics" element={<AiAnalyticsPage />} />
-              </Route>
-
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-
-            <Route
-              path="*"
-              element={<Navigate to={ROUTES.SIGN_IN} replace />}
-            />
-          </Routes>
-        </React.Suspense>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <RouterProvider router={router} fallbackElement={<PageFallback />} />
+    </ThemeProvider>
   );
 }
