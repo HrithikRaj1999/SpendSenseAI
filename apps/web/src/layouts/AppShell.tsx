@@ -12,19 +12,22 @@ export function AppShell() {
         </div>
 
         {/* Right side: content */}
-        <div className="flex h-dvh flex-1 flex-col">
+
+        <div className="flex h-dvh flex-1 flex-col min-w-0">
+          {/* Add min-w-0 to prevent flex blowout */}
           {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto">
-            {/* padding only here */}
+          <main className="flex-1 overflow-y-auto relative custom-scrollbar">
+            {/* Ensure this div handles the padding properly. 
+       The pb-24 on mobile is good to clear the BottomNav. 
+    */}
             <div className="px-3 pt-4 pb-24 sm:px-6 md:pb-6">
               <Outlet />
             </div>
-          </div>
-
+          </main>
           {/* BottomNav (mobile only) */}
-          <div className="md:hidden shrink-0">
+          <nav className="md:hidden shrink-0 border-t bg-background">
             <BottomNav />
-          </div>
+          </nav>
         </div>
       </div>
     </div>
