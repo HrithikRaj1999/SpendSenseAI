@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/routes";
-import { formatINR } from "@/lib/utils";
+import { cn, formatINR } from "@/lib/utils";
 
 import type { Txn, PaymentMethod } from "@/features/expenses/types";
 import type { Timeframe } from "../types";
@@ -597,294 +597,193 @@ export default function AllExpensePage() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card className="rounded-3xl border-0 shadow-lg ring-1 ring-black/5">
-        <CardHeader className="pb-2">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                <Receipt className="h-5 w-5" />
-              </div>
-              <CardTitle className="text-lg font-bold text-foreground">
-                All Expenses
-              </CardTitle>
-              <Badge variant="secondary" className="rounded-xl">
-                {total} records
-              </Badge>
-            </div>
-
-            {/* Bulk actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              {selectedCount > 0 && (
-                <>
-                  <Badge variant="secondary" className="rounded-xl">
-                    Selected: {selectedCount}
-                    {selectAllMatching ? " (all matching)" : ""}
-                  </Badge>
-
-                  <Button
-                    variant="secondary"
-                    className="rounded-2xl"
-                    onClick={() => {
-                      setBulkCategory(ALL);
-                      setBulkMethod(ALL);
-                      setBulkEditOpen(true);
-                    }}
-                    disabled={busy}
+      {/* Responsive Container: Table for Desktop, Cards for Mobile */}
+      <div className="space-y-4">
+        {/* --- DESKTOP VIEW: Scrollable Table --- */}
+        <div className="hidden sm:block -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2 pr-2 text-left w-10">
+                  <Checkbox
+                    checked={
+                      allOnPageChecked
+                        ? true
+                        : someOnPageChecked
+                          ? "indeterminate"
+                          : false
+                    }
+                    onCheckedChange={toggleSelectAllOnPage}
+                  />
+                </th>
+                <th className="py-2 text-left">
+                  <button
+                    className="inline-flex items-center font-semibold"
+                    onClick={() => toggleSort("title")}
                   >
-                    Bulk Edit
-                  </Button>
-
-                  <Button
-                    variant="destructive"
-                    className="rounded-2xl"
-                    onClick={() => setConfirmBulkDelete(true)}
-                    disabled={busy}
+                    Title <SortIcon f="title" />
+                  </button>
+                </th>
+                <th className="py-2 text-left">
+                  <button
+                    className="inline-flex items-center font-semibold"
+                    onClick={() => toggleSort("date")}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Bulk Delete
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="rounded-2xl"
-                    onClick={clearSelection}
-                    disabled={busy}
+                    Date <SortIcon f="date" />
+                  </button>
+                </th>
+                <th className="py-2 text-left">Category</th>
+                <th className="py-2 text-left">Method</th>
+                <th className="py-2 text-right">
+                  <button
+                    className="inline-flex items-center justify-end font-semibold"
+                    onClick={() => toggleSort("amount")}
                   >
-                    Clear
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3">
-          {/* Select all across pages banner */}
-          {rows.length > 0 &&
-            allOnPageChecked &&
-            !selectAllMatching &&
-            total > rows.length && (
-              <div className="rounded-2xl border bg-background p-3 text-sm">
-                All {rows.length} items on this page are selected.{" "}
-                <button
-                  className="font-semibold underline underline-offset-4"
-                  onClick={() => setSelectAllMatching(true)}
+                    Amount <SortIcon f="amount" />
+                  </button>
+                </th>
+                <th className="py-2 text-right">Receipt</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr
+                  key={t.id}
+                  className="border-b last:border-0 hover:bg-muted/40 transition-colors"
                 >
-                  Select all {total} matching results
-                </button>
-              </div>
-            )}
-
-          {selectAllMatching && (
-            <div className="rounded-2xl border bg-background p-3 text-sm">
-              All <span className="font-semibold">{total}</span> matching
-              results are selected
-              {Object.values(excluded).filter(Boolean).length > 0
-                ? ` (excluding ${Object.values(excluded).filter(Boolean).length}).`
-                : "."}{" "}
-              <button
-                className="font-semibold underline underline-offset-4"
-                onClick={clearSelection}
-              >
-                Clear selection
-              </button>
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="p-6 text-sm text-muted-foreground">Loading...</div>
-          ) : rows.length === 0 ? (
-            <div className="p-6 text-sm text-muted-foreground">
-              No expenses found for this filter.
-            </div>
-          ) : (
-            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-              <table className="w-full text-sm min-w-[600px] sm:min-w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-2 pr-2 text-left">
-                      <Checkbox
-                        checked={
-                          allOnPageChecked
-                            ? true
-                            : someOnPageChecked
-                              ? "indeterminate"
-                              : false
-                        }
-                        onCheckedChange={toggleSelectAllOnPage}
-                        aria-label="Select all on page"
-                      />
-                    </th>
-
-                    <th className="py-2 text-left">
-                      <button
-                        className="inline-flex items-center font-semibold"
-                        onClick={() => toggleSort("title")}
-                      >
-                        Title <SortIcon f="title" />
-                      </button>
-                    </th>
-
-                    <th className="py-2 text-left">
-                      <button
-                        className="inline-flex items-center font-semibold"
-                        onClick={() => toggleSort("date")}
-                      >
-                        Date <SortIcon f="date" />
-                      </button>
-                    </th>
-
-                    <th className="py-2 text-left">
-                      <button
-                        className="inline-flex items-center font-semibold"
-                        onClick={() => toggleSort("category")}
-                      >
-                        Category <SortIcon f="category" />
-                      </button>
-                    </th>
-
-                    <th className="py-2 text-left">
-                      <button
-                        className="inline-flex items-center font-semibold"
-                        onClick={() => toggleSort("paymentMethod")}
-                      >
-                        Method <SortIcon f="paymentMethod" />
-                      </button>
-                    </th>
-
-                    <th className="py-2 text-right">
-                      <button
-                        className="inline-flex items-center justify-end font-semibold"
-                        onClick={() => toggleSort("amount")}
-                      >
-                        Amount <SortIcon f="amount" />
-                      </button>
-                    </th>
-
-                    <th className="py-2 text-right">Receipt</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {rows.map((t) => (
-                    <tr
-                      key={t.id}
-                      className="border-b last:border-0 hover:bg-muted/40"
+                  <td className="py-3 pr-2 align-middle">
+                    <Checkbox
+                      checked={isRowChecked(t.id)}
+                      onCheckedChange={(v) => setRowChecked(t.id, !!v)}
+                    />
+                  </td>
+                  <td className="py-3 align-middle font-medium">{t.title}</td>
+                  <td className="py-3 align-middle text-muted-foreground whitespace-nowrap">
+                    {format(new Date(t.date), "dd MMM, hh:mm a")}
+                  </td>
+                  <td className="py-3 align-middle">
+                    <select
+                      className="h-8 rounded-lg border bg-background px-2 text-xs"
+                      value={t.category}
+                      onChange={(e) =>
+                        updateExpense({
+                          id: t.id,
+                          patch: { category: e.target.value },
+                        })
+                      }
                     >
-                      <td className="py-3 pr-2 align-top">
-                        <Checkbox
-                          checked={isRowChecked(t.id)}
-                          onCheckedChange={(v) => setRowChecked(t.id, !!v)}
-                        />
-                      </td>
+                      {categories
+                        .filter((c) => c !== ALL)
+                        .map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                    </select>
+                  </td>
+                  <td className="py-3 align-middle">
+                    <Badge
+                      variant="outline"
+                      className="font-normal whitespace-nowrap"
+                    >
+                      {t.paymentMethod}
+                    </Badge>
+                  </td>
+                  <td className="py-3 align-middle text-right font-bold">
+                    - {formatINR(t.amount)}
+                  </td>
+                  <td className="py-3 align-middle text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => openReceipt(t)}
+                      disabled={!t.receiptUrl}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-                      <td className="py-3 align-top">
-                        <div className="max-w-[340px]">
-                          <p className="truncate font-semibold">{t.title}</p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {t.id}
-                          </p>
-                        </div>
-                      </td>
+        {/* --- MOBILE VIEW: Interactive Cards --- */}
+        <div className="flex flex-col gap-3 sm:hidden">
+          {rows.map((t) => (
+            <div
+              key={t.id}
+              className={cn(
+                "rounded-2xl border p-4 transition-all shadow-sm",
+                isRowChecked(t.id)
+                  ? "bg-primary/5 border-primary/40 ring-1 ring-primary/20"
+                  : "bg-card",
+              )}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={isRowChecked(t.id)}
+                    onCheckedChange={(v) => setRowChecked(t.id, !!v)}
+                    className="mt-1"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-bold truncate text-foreground">
+                      {t.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(t.date), "dd MMM, hh:mm a")}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-foreground">
+                    -{formatINR(t.amount)}
+                  </p>
+                  <Badge
+                    variant="secondary"
+                    className="mt-1.5 text-[10px] uppercase tracking-wider h-5"
+                  >
+                    {t.paymentMethod}
+                  </Badge>
+                </div>
+              </div>
 
-                      <td className="py-3 align-top text-muted-foreground">
-                        {format(new Date(t.date), "dd MMM yyyy, hh:mm a")}
-                      </td>
-
-                      {/* ✅ Inline category edit */}
-                      <td className="py-3 align-top">
-                        <select
-                          className="h-9 rounded-xl border bg-background px-2 text-sm"
-                          value={t.category}
-                          onChange={(e) =>
-                            updateExpense({
-                              id: t.id,
-                              patch: { category: e.target.value },
-                            })
-                          }
-                        >
-                          {categories
-                            .filter((c) => c !== ALL)
-                            .map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                        </select>
-                      </td>
-
-                      {/* ✅ Inline payment method edit */}
-                      <td className="py-3 align-top">
-                        <select
-                          className="h-9 rounded-xl border bg-background px-2 text-sm"
-                          value={t.paymentMethod}
-                          onChange={(e) =>
-                            updateExpense({
-                              id: t.id,
-                              patch: { paymentMethod: e.target.value as any },
-                            })
-                          }
-                        >
-                          {(methods as string[])
-                            .filter((m) => m !== ALL)
-                            .map((m) => (
-                              <option key={m} value={m}>
-                                {m}
-                              </option>
-                            ))}
-                        </select>
-                      </td>
-
-                      <td className="py-3 align-top text-right font-bold">
-                        - {formatINR(t.amount)}
-                      </td>
-
-                      <td className="py-3 align-top text-right">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="rounded-2xl"
-                          onClick={() => openReceipt(t)}
-                          disabled={!t.receiptUrl}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="mt-4 flex items-center justify-between gap-3 border-t pt-3">
+                <select
+                  className="h-9 flex-1 rounded-xl border bg-background px-3 text-xs focus:ring-1 focus:ring-primary"
+                  value={t.category}
+                  onChange={(e) =>
+                    updateExpense({
+                      id: t.id,
+                      patch: { category: e.target.value },
+                    })
+                  }
+                >
+                  {categories
+                    .filter((c) => c !== ALL)
+                    .map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                </select>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-9 rounded-xl px-4"
+                  onClick={() => openReceipt(t)}
+                  disabled={!t.receiptUrl}
+                >
+                  <Eye className="mr-2 h-3.5 w-3.5" />
+                  Receipt
+                </Button>
+              </div>
             </div>
-          )}
-
-          {/* pagination */}
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                className="rounded-2xl"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                Prev
-              </Button>
-              <Button
-                variant="secondary"
-                className="rounded-2xl"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Bulk Edit Dialog */}
       <Dialog open={bulkEditOpen} onOpenChange={setBulkEditOpen}>

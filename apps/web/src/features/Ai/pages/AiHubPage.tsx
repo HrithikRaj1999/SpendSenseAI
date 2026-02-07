@@ -13,7 +13,7 @@ export default function AiHubPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">
-          AI Finance Guru
+          AI Financial Advisor
         </h1>
         <p className="text-sm text-muted-foreground">
           Daily savings tips, smart alerts, and deep spending insights.

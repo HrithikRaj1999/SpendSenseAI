@@ -2,6 +2,7 @@ import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { navItems } from "./nav.config";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = React.useState(false);
@@ -23,14 +24,16 @@ export function AppSidebar() {
               collapsed && "justify-center w-full",
             )}
           >
-            <div className="grid h-9 w-9 place-items-center rounded-xl border font-semibold">
-              S
-            </div>
+            <img
+              src="/favicon.svg"
+              alt="SpendSenseAI"
+              className="h-9 w-9 rounded-xl object-contain shadow-sm"
+            />
             {!collapsed && (
               <div className="leading-tight">
                 <div className="text-sm font-semibold">SpendSenseAI</div>
                 <div className="text-xs text-muted-foreground">
-                  AI Finance Guru
+                  Financial Advisor
                 </div>
               </div>
             )}
@@ -43,7 +46,7 @@ export function AppSidebar() {
             )}
             onClick={() => setCollapsed(true)}
           >
-            Collapse
+            <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
 
@@ -55,7 +58,7 @@ export function AppSidebar() {
               onClick={() => setCollapsed(false)}
               title="Expand"
             >
-              →
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         )}
