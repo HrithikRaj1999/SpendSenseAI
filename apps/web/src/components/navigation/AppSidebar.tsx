@@ -87,7 +87,8 @@ export function AppSidebar() {
           <div className={cn("rounded-xl border p-3", collapsed && "hidden")}>
             <div className="text-xs font-medium">Tip</div>
             <div className="mt-1 text-xs text-muted-foreground">
-              Check <span className="font-medium text-foreground">AI Guru</span>{" "}
+              Check{" "}
+              <span className="font-medium text-foreground">AI Advisor</span>{" "}
               daily for savings ideas.
             </div>
           </div>
