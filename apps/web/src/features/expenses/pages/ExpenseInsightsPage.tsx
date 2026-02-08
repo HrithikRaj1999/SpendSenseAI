@@ -60,8 +60,8 @@ export default function ExpenseInsightsPage() {
               Expense Insights
             </h1>
             <p className="text-sm font-medium text-muted-foreground">
-              Deep dive into your {format(new Date(month + "-01"), "MMMM yyyy")}{" "}
-              spending behaviors.
+              Deep dive into your {format(new Date(month + "-01"))} spending
+              behaviors.
             </p>
           </div>
         </div>
@@ -248,6 +248,6 @@ export default function ExpenseInsightsPage() {
 }
 
 // Helper to format MMMM yyyy
-function format(date: Date, pattern: string) {
+function format(date: Date) {
   return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }

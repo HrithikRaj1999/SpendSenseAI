@@ -38,7 +38,7 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/routes";
 import { cn, formatINR } from "@/lib/utils";
 
-import type { Txn, PaymentMethod } from "@/features/expenses/types";
+import type { Txn } from "@/features/expenses/types";
 import type { Timeframe } from "../types";
 import {
   useGetExpensesQuery,
@@ -107,10 +107,10 @@ export default function AllExpensePage() {
   const defaultYear = now.getFullYear();
 
   const [month, setMonth] = React.useState(defaultMonth);
-  const [quarter, setQuarter] = React.useState(`${defaultYear}-Q1`);
-  const [year, setYear] = React.useState(defaultYear);
-  const [from, setFrom] = React.useState("");
-  const [to, setTo] = React.useState("");
+  const [quarter, _setQuarter] = React.useState(`${defaultYear}-Q1`);
+  const [year, _setYear] = React.useState(defaultYear);
+  const [from, _setFrom] = React.useState("");
+  const [to, _setTo] = React.useState("");
 
   const [search, setSearch] = React.useState("");
   const [category, setCategory] = React.useState<string>(ALL);

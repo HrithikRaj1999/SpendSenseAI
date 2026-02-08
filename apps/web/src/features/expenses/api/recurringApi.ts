@@ -1,17 +1,14 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RecurringItem } from "@/app/dummy/db";
-import { getRecurring } from "@/app/dummy/db";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import type { RecurringItem } from "@/features/expenses/types";
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const recurringApi = createApi({
   reducerPath: "recurringApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: mockBaseQuery,
   tagTypes: ["Recurring"],
   endpoints: (builder) => ({
     getRecurring: builder.query<RecurringItem[], void>({
-      async queryFn() {
-        const data = await getRecurring();
-        return { data };
-      },
+      query: () => ({ url: "/expenses/recurring", method: "GET" }),
       providesTags: ["Recurring"],
     }),
   }),

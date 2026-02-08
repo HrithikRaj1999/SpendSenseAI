@@ -1,5 +1,3 @@
-import * as React from "react";
-
 export function Sparkline({
   points,
   height = 32,

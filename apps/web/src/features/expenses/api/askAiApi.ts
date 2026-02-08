@@ -1,17 +1,18 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { AskAiDTO } from "@/app/dummy/db";
-import { askAi } from "@/app/dummy/db";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import type { AskAiDTO } from "@/features/expenses/types";
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const askAiApi = createApi({
   reducerPath: "askAiApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: mockBaseQuery,
   tagTypes: ["AskAI"],
   endpoints: (builder) => ({
     askAi: builder.mutation<AskAiDTO, { question: string }>({
-      async queryFn({ question }) {
-        const data = await askAi(question);
-        return { data };
-      },
+      query: (body) => ({
+        url: "/expenses/ask-ai",
+        method: "POST",
+        body,
+      }),
     }),
   }),
 });

@@ -1,17 +1,18 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { ExpenseInsightsDTO } from "@/app/dummy/db";
-import { getExpenseInsights } from "@/app/dummy/db";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import type { ExpenseInsightsDTO } from "@/features/expenses/types";
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const insightsApi = createApi({
   reducerPath: "insightsApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: mockBaseQuery,
   tagTypes: ["ExpenseInsights"],
   endpoints: (builder) => ({
     getExpenseInsights: builder.query<ExpenseInsightsDTO, { month: string }>({
-      async queryFn({ month }) {
-        const data = await getExpenseInsights(month);
-        return { data };
-      },
+      query: ({ month }) => ({
+        url: "/expenses/insights",
+        method: "GET",
+        params: { month },
+      }),
       providesTags: ["ExpenseInsights"],
     }),
   }),

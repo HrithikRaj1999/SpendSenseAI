@@ -1,16 +1,17 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import type { DashboardDTO } from "../utils/types";
-import { getDashboardDTO } from "@/app/dummy/db";
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const dashboardApi = createApi({
   reducerPath: "dashboardApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: mockBaseQuery,
   tagTypes: ["Dashboard"],
   endpoints: (builder) => ({
-    getDashboard: builder.query<DashboardDTO, void>({
-      async queryFn() {
-        return { data: getDashboardDTO() };
-      },
+    getDashboard: builder.query<DashboardDTO, { month: string }>({
+      query: ({ month }) => ({
+        url: "/dashboard",
+        params: { month },
+      }),
       providesTags: ["Dashboard"],
       keepUnusedDataFor: 60,
     }),

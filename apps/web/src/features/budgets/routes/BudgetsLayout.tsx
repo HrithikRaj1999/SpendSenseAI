@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useSearchParams } from "react-router-dom";
 
 import { BudgetsSubnav } from "../components/nav/BudgetsSubnav";
 import { BudgetMonthPicker } from "../components/nav/BudgetMonthPicker";
@@ -10,33 +10,72 @@ import {
   useGetBudgetByMonthQuery,
   useListBudgetMonthsQuery,
   useUpdateBudgetMutation,
+  useCloneBudgetMutation,
+  useResetBudgetMutation,
 } from "../api/budgetsApi";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 type BudgetOutletCtx = {
   selectedMonth: string;
 };
 
 export function BudgetsLayout() {
-  const [selectedMonth, setSelectedMonth] = React.useState<string>(
-    () => "2026-01",
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: monthsData } = useListBudgetMonthsQuery();
   const monthOptions = monthsData?.months ?? [];
+
+  // Determine selectedMonth from URL or fallback
+  // Fallback order: URL -> Latest Month -> Current Month
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const latestMonth = monthOptions.length > 0 ? monthOptions[0] : currentMonth; // assuming sorted desc in API
+  const urlMonth = searchParams.get("month");
+
+  // We don't need local state for selectedMonth, we can derive it?
+  // But we want to set it if missing.
+
+  // Actually, let's keep it simple: URL is source of truth.
+  // If URL missing, we redirect/replace URL to default.
+
+  const selectedMonth = urlMonth || latestMonth;
+
+  // Effect to set URL if missing
+  React.useEffect(() => {
+    if (!urlMonth) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("month", selectedMonth);
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [urlMonth, selectedMonth, setSearchParams]);
+
   const [createOpen, setCreateOpen] = React.useState(false);
 
-  const { data, isLoading, isFetching, refetch } =
-    useGetBudgetByMonthQuery(selectedMonth);
+  // Pass separate arg object to query hook
+  const { data, isLoading, isFetching } = useGetBudgetByMonthQuery(
+    { month: selectedMonth },
+    { skip: !selectedMonth },
+  );
+
   const hasBudget = !!data?.budget;
 
   const [createMonthBudget, createState] = useCreateMonthBudgetMutation();
   const [updateBudget, updateState] = useUpdateBudgetMutation();
+  const [cloneBudget, cloneState] = useCloneBudgetMutation();
+  const [resetBudget, resetState] = useResetBudgetMutation();
 
   const busy =
-    isLoading || isFetching || createState.isLoading || updateState.isLoading;
+    isLoading ||
+    isFetching ||
+    createState.isLoading ||
+    updateState.isLoading ||
+    cloneState.isLoading ||
+    resetState.isLoading;
 
   // ---------- actions ----------
   async function onQuickEditBudget() {
@@ -44,28 +83,40 @@ export function BudgetsLayout() {
     await updateBudget({
       month: selectedMonth,
       patch: { totalLimit: data.budget.totalLimit + 5000 },
-    } as any).unwrap();
-    refetch();
+    }).unwrap();
+    // No refetch needed due to tags
   }
 
   async function onClonePrevMonth() {
-    await createMonthBudget({
-      month: selectedMonth,
-      totalLimit: data?.budget?.totalLimit ?? 60000,
-      mode: data?.budget?.mode ?? "FLEXIBLE",
-      rolloverUnused: data?.budget?.rolloverUnused ?? false,
-    } as any).unwrap();
-    refetch();
+    // Clone to next month logic
+    const [y, m] = selectedMonth.split("-").map(Number);
+    const nextDate = new Date(y, m, 1);
+    const nextMonthISO = nextDate.toISOString().slice(0, 7);
+
+    const toMonth = prompt("Clone to month (YYYY-MM):", nextMonthISO);
+    if (!toMonth) return;
+
+    await cloneBudget({
+      fromMonth: selectedMonth,
+      toMonth,
+    }).unwrap();
+
+    // Switch to new month
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("month", toMonth);
+        return next;
+      },
+      { replace: false },
+    );
   }
 
   async function onResetMonthTemplate() {
-    await createMonthBudget({
+    if (!confirm("Reset budget to defaults?")) return;
+    await resetBudget({
       month: selectedMonth,
-      totalLimit: 60000,
-      mode: "FLEXIBLE",
-      rolloverUnused: false,
-    } as any).unwrap();
-    refetch();
+    }).unwrap();
   }
 
   return (
@@ -87,7 +138,13 @@ export function BudgetsLayout() {
             {/* Month Picker stays fixed at start of scroll */}
             <BudgetMonthPicker
               value={selectedMonth}
-              onChange={setSelectedMonth}
+              onChange={(m) => {
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("month", m);
+                  return next;
+                });
+              }}
               options={monthOptions}
               disabled={busy}
             />
@@ -115,7 +172,7 @@ export function BudgetsLayout() {
               variant="outline"
               className="rounded-2xl whitespace-nowrap"
               onClick={onClonePrevMonth}
-              disabled={busy}
+              disabled={!hasBudget || busy}
             >
               Clone Month
             </Button>
@@ -124,7 +181,7 @@ export function BudgetsLayout() {
               variant="outline"
               className="rounded-2xl whitespace-nowrap"
               onClick={onResetMonthTemplate}
-              disabled={busy}
+              disabled={!hasBudget || busy}
             >
               Reset
             </Button>
@@ -152,7 +209,17 @@ export function BudgetsLayout() {
         loading={createState.isLoading}
         onCreate={async (payload) => {
           await createMonthBudget(payload).unwrap();
-          setSelectedMonth(payload.month);
+          // Month sync handled by UI effect or mutation success?
+          // If we create for current selected month, it just appears.
+          // If we create for diff month, we might want to switch.
+          if (payload.month !== selectedMonth) {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.set("month", payload.month);
+              return next;
+            });
+          }
+          setCreateOpen(false);
         }}
       />
 
@@ -165,7 +232,9 @@ export function BudgetsLayout() {
                 <span className="text-2xl">📊</span>
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-semibold">No budget set yet</h3>
+                <h3 className="text-lg font-semibold">
+                  No budget set for {selectedMonth}
+                </h3>
                 <p className="max-w-[300px] text-sm text-muted-foreground leading-relaxed">
                   Create a budget to unlock category limits, alerts, forecasts,
                   and AI insights.

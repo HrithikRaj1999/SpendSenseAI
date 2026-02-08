@@ -1,146 +1,15 @@
-import type { BaseQueryFn } from "@reduxjs/toolkit/query";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import type {
   BudgetDTO,
   BudgetMonth,
-  CategoryBudget,
-  AlertRule,
-  GuardrailRule,
-  Goal,
-  WhatIfScenario,
   BudgetMode,
+  CategoryBudget,
 } from "../utils/types";
-import {
-  mockGetActiveBudget,
-  mockGetBudgetByMonth,
-  mockUpsertCategoryBudget,
-  mockToggleAlertRule,
-  mockCreateAlertRule,
-  mockToggleGuardrail,
-  mockCreateGuardrail,
-  mockCreateGoal,
-  mockSimulateWhatIf,
-  mockCreateMonthBudget,
-  mockUpdateBudget,
-  mockListBudgetMonths,
-} from "./bugdetsMockServer";
-
-type MockArg =
-  | string
-  | {
-      url: string;
-      method?: string;
-      body?: any;
-    };
-
-const mockBaseQuery: BaseQueryFn<
-  MockArg,
-  unknown,
-  { status: number; data: any }
-> = async (arg) => {
-  try {
-    const req =
-      typeof arg === "string"
-        ? { url: arg, method: "GET", body: undefined }
-        : {
-            url: arg.url,
-            method: (arg.method ?? "GET").toUpperCase(),
-            body: arg.body,
-          };
-
-    // mimic network latency
-    // (handlers also have sleeps; keep this 0 or small)
-    // await new Promise((r) => setTimeout(r, 30));
-
-    // ROUTE: GET /budgets/active
-    if (req.method === "GET" && req.url === "/budgets/active") {
-      const data = await mockGetActiveBudget();
-      return { data };
-    }
-    if (req.method === "POST" && req.url === "/budgets/create") {
-      const data = await mockCreateMonthBudget(req.body);
-      return { data };
-    }
-
-    // PATCH /budgets/update
-    if (req.method === "PATCH" && req.url === "/budgets/update") {
-      const data = await mockUpdateBudget(req.body);
-      return { data };
-    }
-    // ROUTE: GET /budgets/:month
-    if (req.method === "GET" && req.url.startsWith("/budgets/")) {
-      const month = decodeURIComponent(req.url.replace("/budgets/", ""));
-      const data = await mockGetBudgetByMonth(month as BudgetMonth);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/categories
-    if (req.method === "POST" && req.url === "/budgets/categories") {
-      const data = await mockUpsertCategoryBudget(req.body);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/alerts
-    if (req.method === "POST" && req.url === "/budgets/alerts") {
-      const data = await mockCreateAlertRule(req.body);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/alerts/toggle
-    if (req.method === "POST" && req.url === "/budgets/alerts/toggle") {
-      const data = await mockToggleAlertRule(req.body);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/guardrails
-    if (req.method === "POST" && req.url === "/budgets/guardrails") {
-      const data = await mockCreateGuardrail(req.body);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/guardrails/toggle
-    if (req.method === "POST" && req.url === "/budgets/guardrails/toggle") {
-      const data = await mockToggleGuardrail(req.body);
-      return { data };
-    }
-    if (req.method === "GET" && req.url === "/budgets/months") {
-      const data = await mockListBudgetMonths();
-      return { data };
-    }
-    // ROUTE: POST /budgets/goals
-    if (req.method === "POST" && req.url === "/budgets/goals") {
-      const data = await mockCreateGoal(req.body);
-      return { data };
-    }
-
-    // ROUTE: POST /budgets/what-if
-    if (req.method === "POST" && req.url === "/budgets/what-if") {
-      const data = await mockSimulateWhatIf(req.body);
-      return { data };
-    }
-
-    return {
-      error: {
-        status: 404,
-        data: { message: `No mock route for ${req.method} ${req.url}` },
-      },
-    };
-  } catch (e: any) {
-    return {
-      error: { status: 500, data: { message: e?.message ?? "Mock error" } },
-    };
-  }
-};
-
-const realBaseQuery = fetchBaseQuery({
-  baseUrl: "/api",
-});
-
-const baseQuery = import.meta.env.DEV ? mockBaseQuery : realBaseQuery;
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const budgetsApi = createApi({
   reducerPath: "budgetsApi",
-  baseQuery,
+  baseQuery: mockBaseQuery,
   tagTypes: [
     "Budget",
     "Categories",
@@ -149,18 +18,84 @@ export const budgetsApi = createApi({
     "Goals",
     "WhatIf",
     "BudgetMonths",
+    "Dashboard",
   ],
   endpoints: (builder) => ({
-    getActiveBudget: builder.query<BudgetDTO, void>({
-      query: () => "/budgets/active",
-      providesTags: ["Budget", "Categories", "Alerts", "Guardrails", "Goals"],
+    getBudgetByMonth: builder.query<BudgetDTO, { month: string }>({
+      query: ({ month }) => ({ url: `/budgets/${month}`, method: "GET" }),
+      providesTags: (_r, _e, arg) => [
+        { type: "Budget", id: arg.month },
+        "Categories",
+        "Alerts",
+        "Guardrails",
+        "Goals",
+      ],
     }),
 
-    getBudgetByMonth: builder.query<BudgetDTO, BudgetMonth>({
-      query: (month) => `/budgets/${encodeURIComponent(month)}`,
-      providesTags: ["Budget", "Categories", "Alerts", "Guardrails", "Goals"],
+    listBudgetMonths: builder.query<{ months: string[] }, void>({
+      query: () => ({ url: "/budgets/months", method: "GET" }),
+      providesTags: ["BudgetMonths"],
     }),
 
+    createMonthBudget: builder.mutation<
+      BudgetDTO,
+      {
+        month: BudgetMonth;
+        totalLimit: number;
+        mode?: BudgetMode;
+        rolloverUnused?: boolean;
+      }
+    >({
+      query: (body) => ({ url: "/budgets", method: "POST", body }),
+      invalidatesTags: ["Budget", "BudgetMonths", "Dashboard"],
+    }),
+
+    updateBudget: builder.mutation<
+      BudgetDTO,
+      {
+        month: BudgetMonth;
+        patch: {
+          totalLimit?: number;
+          mode?: BudgetMode;
+          rolloverUnused?: boolean;
+        };
+      }
+    >({
+      query: ({ month, patch }) => ({
+        url: `/budgets/${month}`,
+        method: "PATCH",
+        body: patch,
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Budget", id: arg.month },
+        "Dashboard",
+      ],
+    }),
+
+    cloneBudget: builder.mutation<
+      BudgetDTO,
+      { fromMonth: string; toMonth: string }
+    >({
+      query: ({ fromMonth, toMonth }) => ({
+        url: `/budgets/${fromMonth}/clone`,
+        method: "POST",
+        body: { toMonth },
+      }),
+      invalidatesTags: ["Budget", "BudgetMonths", "Dashboard"],
+    }),
+
+    resetBudget: builder.mutation<BudgetDTO, { month: string }>({
+      query: ({ month }) => ({
+        url: `/budgets/${month}/reset`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Budget", id: arg.month },
+        "Dashboard",
+      ],
+    }),
+
+    // --- Sub-resources (Categories, Alerts, etc.) ---
     upsertCategoryBudget: builder.mutation<
       CategoryBudget,
       { month: BudgetMonth; category: string; limit: number }
@@ -174,7 +109,7 @@ export const budgetsApi = createApi({
     }),
 
     toggleAlertRule: builder.mutation<
-      AlertRule,
+      any, // AlertRule
       { id: string; enabled: boolean }
     >({
       query: (body) => ({
@@ -184,50 +119,8 @@ export const budgetsApi = createApi({
       }),
       invalidatesTags: ["Alerts"],
     }),
-    createMonthBudget: builder.mutation<
-      BudgetDTO,
-      {
-        month: BudgetMonth;
-        totalLimit: number;
-        mode?: BudgetMode;
-        rolloverUnused?: boolean;
-      }
-    >({
-      query: (body) => ({ url: "/budgets/create", method: "POST", body }),
-      invalidatesTags: [
-        "Budget",
-        "Categories",
-        "Alerts",
-        "Guardrails",
-        "Goals",
-        "BudgetMonths",
-      ],
-    }),
-    listBudgetMonths: builder.query<{ months: string[] }, void>({
-      query: () => ({ url: "/budgets/months", method: "GET" }),
-      providesTags: ["BudgetMonths"],
-    }),
-    updateBudget: builder.mutation<
-      BudgetDTO,
-      {
-        month: BudgetMonth;
-        patch: {
-          totalLimit?: number;
-          mode?: BudgetMode;
-          rolloverUnused?: boolean;
-        };
-      }
-    >({
-      query: (body) => ({ url: "/budgets/update", method: "PATCH", body }),
-      invalidatesTags: [
-        "Budget",
-        "Categories",
-        "Alerts",
-        "Guardrails",
-        "Goals",
-      ],
-    }),
-    createAlertRule: builder.mutation<AlertRule, Partial<AlertRule>>({
+
+    createAlertRule: builder.mutation<any, Partial<any>>({
       query: (body) => ({
         url: "/budgets/alerts",
         method: "POST",
@@ -237,7 +130,7 @@ export const budgetsApi = createApi({
     }),
 
     toggleGuardrail: builder.mutation<
-      GuardrailRule,
+      any, // GuardrailRule
       { id: string; enabled: boolean }
     >({
       query: (body) => ({
@@ -248,7 +141,7 @@ export const budgetsApi = createApi({
       invalidatesTags: ["Guardrails"],
     }),
 
-    createGuardrail: builder.mutation<GuardrailRule, Partial<GuardrailRule>>({
+    createGuardrail: builder.mutation<any, Partial<any>>({
       query: (body) => ({
         url: "/budgets/guardrails",
         method: "POST",
@@ -257,7 +150,7 @@ export const budgetsApi = createApi({
       invalidatesTags: ["Guardrails"],
     }),
 
-    createGoal: builder.mutation<Goal, Partial<Goal>>({
+    createGoal: builder.mutation<any, Partial<any>>({
       query: (body) => ({
         url: "/budgets/goals",
         method: "POST",
@@ -268,7 +161,7 @@ export const budgetsApi = createApi({
 
     simulateWhatIf: builder.mutation<
       BudgetDTO,
-      { month: BudgetMonth; scenario: WhatIfScenario }
+      { month: BudgetMonth; scenario: any }
     >({
       query: (body) => ({
         url: "/budgets/what-if",
@@ -281,6 +174,12 @@ export const budgetsApi = createApi({
 });
 
 export const {
+  useGetBudgetByMonthQuery,
+  useListBudgetMonthsQuery,
+  useCreateMonthBudgetMutation,
+  useUpdateBudgetMutation,
+  useCloneBudgetMutation,
+  useResetBudgetMutation,
   useUpsertCategoryBudgetMutation,
   useToggleAlertRuleMutation,
   useCreateAlertRuleMutation,
@@ -288,9 +187,14 @@ export const {
   useCreateGuardrailMutation,
   useCreateGoalMutation,
   useSimulateWhatIfMutation,
-  useGetActiveBudgetQuery,
-  useGetBudgetByMonthQuery,
-  useCreateMonthBudgetMutation,
-  useUpdateBudgetMutation,
-  useListBudgetMonthsQuery,
 } = budgetsApi;
+
+// Shim for getting active budget from URL
+import { useSearchParams } from "react-router-dom";
+
+export const useGetActiveBudgetQuery = () => {
+  const [searchParams] = useSearchParams();
+  const month =
+    searchParams.get("month") || new Date().toISOString().slice(0, 7);
+  return useGetBudgetByMonthQuery({ month });
+};

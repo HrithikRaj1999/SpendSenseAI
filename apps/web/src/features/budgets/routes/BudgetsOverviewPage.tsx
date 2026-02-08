@@ -13,6 +13,22 @@ export function BudgetsOverviewPage() {
   const { data } = useGetActiveBudgetQuery();
   if (!data) return null;
 
+  if (!data.budget) {
+    return (
+      <div className="flex flex-col items-center justify-center space-y-4 py-12 text-center animate-in fade-in">
+        <div className="rounded-full bg-muted p-4">
+          <span className="text-2xl">📊</span>
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold">No Budget Set</h3>
+          <p className="text-sm text-muted-foreground">
+            Creates a budget to see analytics.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">

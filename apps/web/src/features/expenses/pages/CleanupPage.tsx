@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +17,7 @@ export default function CleanupPage() {
   const pairs = data ?? [];
 
   async function deleteOne(id: string) {
-    await softDelete([id]).unwrap();
+    await softDelete({ ids: [id] }).unwrap();
   }
 
   return (

@@ -26,24 +26,27 @@ export function BudgetMonthPicker({
   // Ensure selected month is always visible in dropdown
   const opts = React.useMemo(() => {
     const set = new Set(options);
-    set.add(value);
-    return Array.from(set).sort();
+    if (value) set.add(value); // Only add if value exists
+    return Array.from(set).sort().reverse(); // Show newest first
   }, [options, value]);
 
-  // URL → state on mount
-  React.useEffect(() => {
-    const urlMonth = params.get("month");
-    if (urlMonth && urlMonth !== value) onChange(urlMonth);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // URL → state on mount or URL change
+  // If URL has month, sync to internal value (handled by parent passing 'value')
+  // But if URL doesn't have month, parent might want to set default.
+  // Actually parent manages state.
 
-  // state → URL
+  // When value changes from Parent (e.g. initial load or reset), update URL
   React.useEffect(() => {
     const urlMonth = params.get("month");
     if (value && urlMonth !== value) {
-      const next = new URLSearchParams(params);
-      next.set("month", value);
-      setParams(next, { replace: true });
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("month", value);
+          return next;
+        },
+        { replace: true },
+      );
     }
   }, [value, params, setParams]);
 
@@ -52,9 +55,14 @@ export function BudgetMonthPicker({
       value={value}
       onValueChange={(v) => {
         onChange(v);
-        const next = new URLSearchParams(params);
-        next.set("month", v);
-        setParams(next, { replace: true });
+        setParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set("month", v);
+            return next;
+          },
+          { replace: true },
+        );
       }}
       disabled={disabled}
     >

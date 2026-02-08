@@ -1,17 +1,14 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { DuplicatePair } from "@/app/dummy/db";
-import { getDuplicateSuggestions } from "@/app/dummy/db";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import type { DuplicatePair } from "@/features/expenses/types";
+import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
 export const cleanupApi = createApi({
   reducerPath: "cleanupApi",
-  baseQuery: fakeBaseQuery(),
+  baseQuery: mockBaseQuery,
   tagTypes: ["Cleanup"],
   endpoints: (builder) => ({
     getDuplicates: builder.query<DuplicatePair[], void>({
-      async queryFn() {
-        const data = await getDuplicateSuggestions();
-        return { data };
-      },
+      query: () => ({ url: "/expenses/cleanup/duplicates", method: "GET" }),
       providesTags: ["Cleanup"],
     }),
   }),

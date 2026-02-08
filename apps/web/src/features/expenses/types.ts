@@ -69,3 +69,37 @@ export type ExpensesDTO = {
   rows: Expense[];
   total: number;
 };
+
+// --- Added for specific features ---
+
+export type RecurringItem = {
+  id: string;
+  title: string;
+  category: string;
+  avgAmount: number;
+  cadence: "Monthly" | "Weekly";
+  nextDue: string; // ISO date
+  lastSeen: string; // ISO date
+  paymentMethod: PaymentMethod;
+};
+
+export type DuplicatePair = {
+  a: Txn;
+  b: Txn;
+  confidence: number; // 0..1
+  reason: string;
+};
+
+export type ExpenseInsightsDTO = {
+  totals: { month: string; spend: number; txns: number };
+  byCategory: { name: string; amount: number }[];
+  byMethod: { name: string; amount: number }[];
+  topMerchants: { title: string; amount: number; count: number }[];
+  unusual: Txn[]; // large txns
+};
+
+export type AskAiDTO = {
+  question: string;
+  answer: string;
+  bullets: string[];
+};

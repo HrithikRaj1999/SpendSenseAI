@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { Download, Filter, Receipt, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTES } from "@/app/router/routes";
 import { formatINR } from "@/lib/utils";
 
@@ -55,6 +55,8 @@ const ALL = "All";
 export default function ExpensesPage() {
   const nav = useNavigate();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [sortField, setSortField] = React.useState<
     "date" | "amount" | "title" | "category" | "paymentMethod"
   >("date");
@@ -67,7 +69,26 @@ export default function ExpensesPage() {
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const defaultYear = now.getFullYear();
 
-  const [month, setMonth] = React.useState(defaultMonth);
+  // D1. Single source of truth for month
+  const urlMonth = searchParams.get("month");
+  const [month, setMonth] = React.useState(urlMonth || defaultMonth);
+
+  // Sync state -> URL
+  React.useEffect(() => {
+    if (timeframe === "month") {
+      const current = searchParams.get("month");
+      if (current !== month) {
+        setSearchParams(
+          (prev) => {
+            prev.set("month", month);
+            return prev;
+          },
+          { replace: true },
+        );
+      }
+    }
+  }, [month, timeframe, setSearchParams, searchParams]);
+
   const [quarter, setQuarter] = React.useState(`${defaultYear}-Q1`);
   const [year, setYear] = React.useState(defaultYear);
 

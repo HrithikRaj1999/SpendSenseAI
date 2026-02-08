@@ -52,7 +52,7 @@ export default function BulkActionsPage() {
       .filter(([, v]) => v)
       .map(([k]) => k);
     if (ids.length === 0) return;
-    await softDelete(ids).unwrap();
+    await softDelete({ ids }).unwrap();
     clearAll();
   }
 
