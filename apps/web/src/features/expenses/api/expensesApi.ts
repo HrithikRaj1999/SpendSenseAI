@@ -1,33 +1,15 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import type {
   CreateExpenseInput,
   Txn,
   GetTransactionsArgs,
   TransactionsDTO,
 } from "@/features/expenses/types";
-import { mockBaseQuery } from "@/app/store/mockBaseQuery";
-
-const hybridBaseQuery: typeof mockBaseQuery = async (args, api, extraOptions) => {
-  if (typeof args === 'object' && args.url.startsWith("/ai")) {
-    const result = await fetchBaseQuery({ baseUrl: "/api" })(args, api, extraOptions);
-    if (result.error) {
-      return {
-        error: {
-          status: Number(result.error.status) || 500,
-          message: typeof result.error.data === 'string'
-            ? result.error.data
-            : JSON.stringify(result.error.data || "Unknown Error")
-        }
-      } as any;
-    }
-    return { data: result.data } as any;
-  }
-  return mockBaseQuery(args, api, extraOptions);
-};
+import { baseQuery } from "@/app/store/baseQuery";
 
 export const expensesApi = createApi({
   reducerPath: "expensesApi",
-  baseQuery: hybridBaseQuery,
+  baseQuery: baseQuery,
   tagTypes: ["Expenses", "Trash", "Dashboard", "Budgets"],
   endpoints: (b) => ({
     getExpenses: b.query<TransactionsDTO, GetTransactionsArgs>({

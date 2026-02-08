@@ -23,3 +23,7 @@ build/
 .env.local
 .DS_Store
 ```
+
+*.db
+*.sqlite
+local.db

@@ -1,10 +1,10 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import type { AskAiDTO } from "@/features/expenses/types";
-import { mockBaseQuery } from "@/app/store/mockBaseQuery";
+import { baseQuery } from "@/app/store/baseQuery";
 
 export const askAiApi = createApi({
   reducerPath: "askAiApi",
-  baseQuery: mockBaseQuery,
+  baseQuery: baseQuery,
   tagTypes: ["AskAI"],
   endpoints: (builder) => ({
     askAi: builder.mutation<AskAiDTO, { question: string }>({
