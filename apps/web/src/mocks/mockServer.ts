@@ -2,12 +2,9 @@ import { MockDB } from "./mockDb";
 import type { Budget } from "@/features/budgets/utils/types";
 import { type Txn } from "@/features/expenses/types";
 import {
-  startOfMonth,
   endOfMonth,
   startOfQuarter,
   endOfQuarter,
-  startOfYear,
-  endOfYear,
   parseISO,
   isWithinInterval,
 } from "date-fns";
@@ -152,11 +149,11 @@ function calculateBudgetDTO(budget: Budget, month: string) {
   const endOfMonthDate = endOfMonth(parseISO(`${month}-01`));
   const daysRemaining = isCurrentMonth
     ? Math.max(
-        0,
-        Math.ceil(
-          (endOfMonthDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        ),
-      )
+      0,
+      Math.ceil(
+        (endOfMonthDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    )
     : 0;
   const dailyAllowance =
     daysRemaining > 0 ? Math.max(0, remaining / daysRemaining) : 0;
@@ -294,11 +291,11 @@ export async function mockFetch(req: MockRequest): Promise<any> {
     const endOfMonthDate = endOfMonth(parseISO(`${month}-01`));
     const daysRemaining = isCurrentMonth
       ? Math.max(
-          0,
-          Math.ceil(
-            (endOfMonthDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-          ),
-        )
+        0,
+        Math.ceil(
+          (endOfMonthDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      )
       : 0;
     const dailyAllowance =
       daysRemaining > 0 ? Math.max(0, remaining / daysRemaining) : 0;

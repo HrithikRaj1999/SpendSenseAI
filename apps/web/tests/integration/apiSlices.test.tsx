@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
 import { budgetsApi } from "@/features/budgets/api/budgetsApi";
 import { expensesApi } from "@/features/expenses/api/expensesApi";
