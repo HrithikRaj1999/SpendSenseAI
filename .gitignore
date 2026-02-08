@@ -30,3 +30,6 @@ pnpm-debug.log*
 
 # Monorepo
 .turbo
+
+infra/spendsense-key
+infra/spendsense-key.pub

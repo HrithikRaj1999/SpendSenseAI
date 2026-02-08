@@ -5,11 +5,11 @@ import type {
   BudgetMode,
   CategoryBudget,
 } from "../utils/types";
-import { mockBaseQuery } from "@/app/store/mockBaseQuery";
+import { baseQuery } from "@/app/store/baseQuery";
 
 export const budgetsApi = createApi({
   reducerPath: "budgetsApi",
-  baseQuery: mockBaseQuery,
+  baseQuery: baseQuery,
   tagTypes: [
     "Budget",
     "Categories",

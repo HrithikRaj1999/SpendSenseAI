@@ -9,9 +9,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    aws_region: str = Field(..., alias="AWS_REGION")
-    cognito_user_pool_id: str = Field(..., alias="COGNITO_USER_POOL_ID")
-    cognito_client_id: str = Field(..., alias="COGNITO_CLIENT_ID")
+    aws_region: str | None = Field(None, alias="AWS_REGION")
+    cognito_user_pool_id: str | None = Field(None, alias="COGNITO_USER_POOL_ID")
+    cognito_client_id: str | None = Field(None, alias="COGNITO_CLIENT_ID")
 
     @property
     def cognito_issuer(self) -> str:
