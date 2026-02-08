@@ -8,6 +8,7 @@ import { ROUTES } from "@/app/router/routes";
 import { ArrowLeft, PlusCircle, Sparkles, Wallet } from "lucide-react";
 import { useCreateExpenseMutation } from "../api/expensesApi";
 import { AiImportModal } from "../components/AiImportModal";
+import { AudioExpenseCapture } from "../components/AudioExpenseCapture";
 import { ExpenseDetails } from "../types";
 
 const CATEGORIES = [
@@ -32,8 +33,10 @@ export default function AddExpensePage() {
     React.useState<(typeof METHODS)[number]>("UPI");
   const [amount, setAmount] = React.useState<number>(0);
   const [date, setDate] = React.useState<string>(new Date().toISOString());
+  const [notes, setNotes] = React.useState("");
 
   const [importModalOpen, setImportModalOpen] = React.useState(false);
+  const [audioModalOpen, setAudioModalOpen] = React.useState(false);
 
   const handleImportConfirm = (data: ExpenseDetails) => {
     setTitle(data.title);
@@ -41,7 +44,8 @@ export default function AddExpensePage() {
     setPaymentMethod(data.paymentMethod);
     setAmount(data.amount);
     if (data.date) setDate(data.date);
-    // Description ignored for MVP as per user instruction
+    if (data.notes) setNotes(data.notes);
+    if (data.description) setNotes(data.description); // fallback
   };
 
   async function onSave() {
@@ -53,7 +57,7 @@ export default function AddExpensePage() {
       paymentMethod,
       amount,
       date,
-      // description, // Backend might not support it yet unless checked
+      // notes, // createExpense input might not have notes? Check Txn type later or pass as description
     }).unwrap();
 
     nav(ROUTES.EXPENSES);
@@ -86,7 +90,11 @@ export default function AddExpensePage() {
         <div className="flex gap-2">
           <Button variant="outline" className="rounded-xl border-dashed" onClick={() => setImportModalOpen(true)}>
             <Sparkles className="mr-2 h-3.5 w-3.5" />
-            Import from Image
+            Scan Receipt
+          </Button>
+          <Button variant="outline" className="rounded-xl border-dashed" onClick={() => setAudioModalOpen(true)}>
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            Voice Add
           </Button>
           <Badge variant="secondary" className="rounded-xl">
             <Sparkles className="mr-2 h-3.5 w-3.5" />
@@ -98,6 +106,12 @@ export default function AddExpensePage() {
       <AiImportModal
         isOpen={importModalOpen}
         onClose={() => setImportModalOpen(false)}
+        onConfirm={handleImportConfirm}
+      />
+
+      <AudioExpenseCapture
+        isOpen={audioModalOpen}
+        onClose={() => setAudioModalOpen(false)}
         onConfirm={handleImportConfirm}
       />
 
@@ -176,6 +190,17 @@ export default function AddExpensePage() {
               Date (ISO)
             </p>
             <Input value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+
+          <div className="sm:col-span-2">
+            <p className="mb-1 text-xs font-medium text-muted-foreground">
+              Notes
+            </p>
+            <Input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any additional details..."
+            />
           </div>
 
           <div className="sm:col-span-2 flex justify-end gap-2 pt-2">

@@ -10,6 +10,8 @@ export type Txn = {
 
   deletedAt?: string | null;
   receiptUrl?: string | null;
+  description?: string | null;
+  merchant?: string | null;
 };
 
 export type CreateExpenseInput = Omit<Txn, "id" | "deletedAt">;
@@ -111,6 +113,9 @@ export type ExpenseDetails = {
   amount: number;
   date: string | null;
   description?: string;
+  currency?: string;
+  merchant?: string | null;
+  notes?: string | null;
 };
 
 export type ExpenseAIResult = {

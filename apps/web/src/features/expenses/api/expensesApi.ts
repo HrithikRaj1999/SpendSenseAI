@@ -190,6 +190,17 @@ export const expensesApi = createApi({
         body,
       }),
     }),
+
+    parseExpenseFromAudio: b.mutation<
+      import("../types").ExpenseAIResult,
+      FormData
+    >({
+      query: (body) => ({
+        url: "/ai/expense/parse-audio",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -206,4 +217,5 @@ export const {
   useSoftDeleteByFilterMutation,
   useBulkUpdateByFilterMutation,
   useParseExpenseFromImageMutation,
+  useParseExpenseFromAudioMutation,
 } = expensesApi;
