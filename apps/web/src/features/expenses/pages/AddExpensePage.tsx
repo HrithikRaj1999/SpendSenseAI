@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/app/router/routes";
 import { ArrowLeft, PlusCircle, Sparkles, Wallet } from "lucide-react";
 import { useCreateExpenseMutation } from "../api/expensesApi";
+import { AiImportModal } from "../components/AiImportModal";
+import { ExpenseDetails } from "../types";
 
 const CATEGORIES = [
   "Food & Dining",
@@ -31,6 +33,17 @@ export default function AddExpensePage() {
   const [amount, setAmount] = React.useState<number>(0);
   const [date, setDate] = React.useState<string>(new Date().toISOString());
 
+  const [importModalOpen, setImportModalOpen] = React.useState(false);
+
+  const handleImportConfirm = (data: ExpenseDetails) => {
+    setTitle(data.title);
+    setCategory(data.category);
+    setPaymentMethod(data.paymentMethod);
+    setAmount(data.amount);
+    if (data.date) setDate(data.date);
+    // Description ignored for MVP as per user instruction
+  };
+
   async function onSave() {
     if (!title.trim() || amount <= 0) return;
 
@@ -40,6 +53,7 @@ export default function AddExpensePage() {
       paymentMethod,
       amount,
       date,
+      // description, // Backend might not support it yet unless checked
     }).unwrap();
 
     nav(ROUTES.EXPENSES);
@@ -69,11 +83,23 @@ export default function AddExpensePage() {
           </div>
         </div>
 
-        <Badge variant="secondary" className="rounded-xl">
-          <Sparkles className="mr-2 h-3.5 w-3.5" />
-          Smart defaults enabled
-        </Badge>
+        <div className="flex gap-2">
+          <Button variant="outline" className="rounded-xl border-dashed" onClick={() => setImportModalOpen(true)}>
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            Import from Image
+          </Button>
+          <Badge variant="secondary" className="rounded-xl">
+            <Sparkles className="mr-2 h-3.5 w-3.5" />
+            Smart defaults enabled
+          </Badge>
+        </div>
       </div>
+
+      <AiImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onConfirm={handleImportConfirm}
+      />
 
       <Card className="rounded-3xl border-0 shadow-lg ring-1 ring-black/5">
         <CardHeader className="pb-2">

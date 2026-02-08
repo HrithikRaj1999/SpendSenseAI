@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { mockFetch } from "@/mocks/mockServer";
 import { MockDB } from "@/mocks/mockDb";
 import type { Txn } from "@/features/expenses/types";

@@ -103,3 +103,19 @@ export type AskAiDTO = {
   answer: string;
   bullets: string[];
 };
+
+export type ExpenseDetails = {
+  title: string;
+  category: string;
+  paymentMethod: PaymentMethod;
+  amount: number;
+  date: string | null;
+  description?: string;
+};
+
+export type ExpenseAIResult = {
+  expense: ExpenseDetails;
+  confidence: number;
+  warnings: string[];
+  rawText?: string;
+};
