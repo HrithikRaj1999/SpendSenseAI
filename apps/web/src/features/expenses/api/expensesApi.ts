@@ -1,4 +1,4 @@
-import { createApi } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type {
   CreateExpenseInput,
   Txn,
@@ -7,9 +7,27 @@ import type {
 } from "@/features/expenses/types";
 import { mockBaseQuery } from "@/app/store/mockBaseQuery";
 
+const hybridBaseQuery: typeof mockBaseQuery = async (args, api, extraOptions) => {
+  if (typeof args === 'object' && args.url.startsWith("/ai")) {
+    const result = await fetchBaseQuery({ baseUrl: "/api" })(args, api, extraOptions);
+    if (result.error) {
+      return {
+        error: {
+          status: Number(result.error.status) || 500,
+          message: typeof result.error.data === 'string'
+            ? result.error.data
+            : JSON.stringify(result.error.data || "Unknown Error")
+        }
+      } as any;
+    }
+    return { data: result.data } as any;
+  }
+  return mockBaseQuery(args, api, extraOptions);
+};
+
 export const expensesApi = createApi({
   reducerPath: "expensesApi",
-  baseQuery: mockBaseQuery,
+  baseQuery: hybridBaseQuery,
   tagTypes: ["Expenses", "Trash", "Dashboard", "Budgets"],
   endpoints: (b) => ({
     getExpenses: b.query<TransactionsDTO, GetTransactionsArgs>({
@@ -21,9 +39,9 @@ export const expensesApi = createApi({
       providesTags: (res) =>
         res
           ? [
-              { type: "Expenses", id: "LIST" },
-              ...res.rows.map((r) => ({ type: "Expenses" as const, id: r.id })),
-            ]
+            { type: "Expenses", id: "LIST" },
+            ...res.rows.map((r) => ({ type: "Expenses" as const, id: r.id })),
+          ]
           : [{ type: "Expenses", id: "LIST" }],
     }),
     createExpense: b.mutation<Txn, CreateExpenseInput>({
@@ -134,9 +152,9 @@ export const expensesApi = createApi({
       providesTags: (res) =>
         res
           ? [
-              { type: "Trash", id: "LIST" },
-              ...res.rows.map((r) => ({ type: "Trash" as const, id: r.id })),
-            ]
+            { type: "Trash", id: "LIST" },
+            ...res.rows.map((r) => ({ type: "Trash" as const, id: r.id })),
+          ]
           : [{ type: "Trash", id: "LIST" }],
     }),
 
@@ -161,6 +179,17 @@ export const expensesApi = createApi({
       },
       invalidatesTags: ["Trash", "Expenses"],
     }),
+
+    parseExpenseFromImage: b.mutation<
+      import("../types").ExpenseAIResult,
+      FormData
+    >({
+      query: (body) => ({
+        url: "/ai/expense/parse-image",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -176,4 +205,5 @@ export const {
   useBulkUpdateExpensesMutation,
   useSoftDeleteByFilterMutation,
   useBulkUpdateByFilterMutation,
+  useParseExpenseFromImageMutation,
 } = expensesApi;
