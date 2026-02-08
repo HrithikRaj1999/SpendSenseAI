@@ -7,8 +7,11 @@ class ExpenseDetails(BaseModel):
     category: str = Field(..., description="Expense category")
     paymentMethod: str = Field(..., description="Payment method used")
     amount: float = Field(..., description="Total amount of the expense")
+    currency: str = Field("INR", description="Currency code, defaults to INR")
     date: Optional[str] = Field(None, description="Date of the expense in ISO format")
-    description: Optional[str] = Field(None, description="Brief description or notes about the expense")
+    merchant: Optional[str] = Field(None, description="Merchant/Store name")
+    notes: Optional[str] = Field(None, description="Brief description or notes about the expense")
+    description: Optional[str] = Field(None, description="Legacy description field, mapped to notes if needed")
 
 class ExpenseAIResult(BaseModel):
     expense: ExpenseDetails
