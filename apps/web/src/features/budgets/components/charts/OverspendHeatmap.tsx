@@ -23,7 +23,7 @@ export function OverspendHeatmap({ cells }: { cells: OverspendHeatCell[] }) {
   const displayCells = cells.slice(0, 31);
 
   return (
-    <Card className="rounded-3xl border-0 shadow-lg ring-1 ring-black/5 bg-card text-card-foreground overflow-hidden">
+    <Card className="rounded-3xl border-0 shadow-lg ring-1 ring-black/5 bg-card text-card-foreground overflow-hidden w-full">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-bold">

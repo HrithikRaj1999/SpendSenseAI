@@ -100,6 +100,9 @@ export function EditBudgetModal({
       <DialogContent className="rounded-3xl sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Budget ({month})</DialogTitle>
+          <div className="text-sm text-muted-foreground">
+            Modify your budget settings below.
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 pt-2">

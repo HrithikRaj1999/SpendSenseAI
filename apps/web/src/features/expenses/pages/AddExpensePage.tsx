@@ -24,7 +24,6 @@ const METHODS = ["UPI", "Card", "NetBanking", "Cash"] as const;
 export default function AddExpensePage() {
   const nav = useNavigate();
   const [createExpense, { isLoading }] = useCreateExpenseMutation();
-
   const [title, setTitle] = React.useState("");
   const [category, setCategory] = React.useState(CATEGORIES[0]);
   const [paymentMethod, setPaymentMethod] =
