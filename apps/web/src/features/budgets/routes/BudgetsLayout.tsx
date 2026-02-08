@@ -4,6 +4,7 @@ import { Outlet, useSearchParams } from "react-router-dom";
 import { BudgetsSubnav } from "../components/nav/BudgetsSubnav";
 import { BudgetMonthPicker } from "../components/nav/BudgetMonthPicker";
 import { CreateFirstBudgetModal } from "../components/modals/CreateFirstBudgetModal";
+import { EditBudgetModal } from "../components/modals/EditBudgetModal";
 
 import {
   useCreateMonthBudgetMutation,
@@ -55,6 +56,7 @@ export function BudgetsLayout() {
   }, [urlMonth, selectedMonth, setSearchParams]);
 
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
 
   // Pass separate arg object to query hook
   const { data, isLoading, isFetching } = useGetBudgetByMonthQuery(
@@ -80,11 +82,7 @@ export function BudgetsLayout() {
   // ---------- actions ----------
   async function onQuickEditBudget() {
     if (!data?.budget) return;
-    await updateBudget({
-      month: selectedMonth,
-      patch: { totalLimit: data.budget.totalLimit + 5000 },
-    }).unwrap();
-    // No refetch needed due to tags
+    setEditOpen(true);
   }
 
   async function onClonePrevMonth() {
@@ -220,6 +218,23 @@ export function BudgetsLayout() {
             });
           }
           setCreateOpen(false);
+        }}
+      />
+
+      <EditBudgetModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        month={selectedMonth}
+        currentLimit={data?.budget?.totalLimit ?? 0}
+        currentMode={data?.budget?.mode ?? "FLEXIBLE"}
+        currentRollover={data?.budget?.rolloverUnused ?? false}
+        loading={updateState.isLoading}
+        onEdit={async (payload) => {
+          await updateBudget({
+            month: selectedMonth,
+            patch: payload,
+          }).unwrap();
+          setEditOpen(false);
         }}
       />
 
